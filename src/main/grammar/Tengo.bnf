@@ -254,7 +254,9 @@ private array_elements ::= expr (COMMA expr)* COMMA?
 map_literal     ::= LBRACE [map_entries] RBRACE { pin=1 }
 private map_entries    ::= map_entry (COMMA map_entry)* COMMA?
 map_entry       ::= map_key COLON expr { pin=2 }
-map_key         ::= IDENTIFIER | STRING_LITERAL | RAW_STRING_LITERAL
+map_key         ::= IDENTIFIER | STRING_LITERAL | RAW_STRING_LITERAL {
+  mixin="com.github.blackcat.tengo.psi.impl.TengoMapKeyMixin"
+}
 
 literal ::= INTEGER_LITERAL
           | FLOAT_LITERAL
