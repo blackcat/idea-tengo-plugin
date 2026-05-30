@@ -1,0 +1,124 @@
+<idea-plugin>
+    <id>com.github.blackcat.tengo</id>
+    <name>Tengo</name>
+    <vendor email="pvyazankin@milaboratories.com" url="https://github.com/blackcat/idea-tengo-plugin">blackcat</vendor>
+
+    <description><![CDATA[
+        Language support for <a href="https://github.com/d5/tengo">Tengo</a>, a small, dynamic, fast,
+        secure scripting language embeddable in Go applications.
+        <br>
+        Features:
+        <ul>
+            <li>Syntax highlighting</li>
+            <li>Brace matching, code folding, comment toggling</li>
+            <li>Structure view</li>
+            <li>Code completion (keywords, builtins, stdlib modules, local symbols)</li>
+            <li>Go to definition and find usages (across imported files)</li>
+            <li>Reformat code</li>
+        </ul>
+    ]]></description>
+
+    <change-notes><![CDATA[
+        <h3>0.1.0</h3>
+        <ul>
+            <li>Initial release.</li>
+        </ul>
+    ]]></change-notes>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <fileType
+            name="Tengo"
+            implementationClass="com.github.blackcat.tengo.TengoFileType"
+            fieldName="INSTANCE"
+            language="Tengo"
+            extensions="tengo"/>
+
+        <lang.parserDefinition
+            language="Tengo"
+            implementationClass="com.github.blackcat.tengo.parser.TengoParserDefinition"/>
+
+        <lang.syntaxHighlighterFactory
+            language="Tengo"
+            implementationClass="com.github.blackcat.tengo.highlighting.TengoSyntaxHighlighterFactory"/>
+
+        <colorSettingsPage
+            implementation="com.github.blackcat.tengo.highlighting.TengoColorSettingsPage"/>
+
+        <annotator
+            language="Tengo"
+            implementationClass="com.github.blackcat.tengo.highlighting.TengoBuiltinAnnotator"/>
+
+        <lang.braceMatcher
+            language="Tengo"
+            implementationClass="com.github.blackcat.tengo.editor.TengoBraceMatcher"/>
+
+        <lang.commenter
+            language="Tengo"
+            implementationClass="com.github.blackcat.tengo.editor.TengoCommenter"/>
+
+        <lang.foldingBuilder
+            language="Tengo"
+            implementationClass="com.github.blackcat.tengo.editor.TengoFoldingBuilder"/>
+
+        <lang.psiStructureViewFactory
+            language="Tengo"
+            implementationClass="com.github.blackcat.tengo.structure.TengoStructureViewFactory"/>
+
+        <completion.contributor
+            language="Tengo"
+            implementationClass="com.github.blackcat.tengo.completion.TengoCompletionContributor"/>
+
+        <psi.referenceContributor
+            language="Tengo"
+            implementation="com.github.blackcat.tengo.reference.TengoReferenceContributor"/>
+
+        <lang.formatter
+            language="Tengo"
+            implementationClass="com.github.blackcat.tengo.format.TengoFormattingModelBuilder"/>
+
+        <lang.findUsagesProvider
+            language="Tengo"
+            implementationClass="com.github.blackcat.tengo.reference.TengoFindUsagesProvider"/>
+
+        <lang.documentationProvider
+            language="Tengo"
+            implementationClass="com.github.blackcat.tengo.docs.TengoDocumentationProvider"/>
+
+        <localInspection
+            language="Tengo"
+            implementationClass="com.github.blackcat.tengo.inspections.TengoUnresolvedReferenceInspection"
+            displayName="Unresolved Tengo reference"
+            groupName="Tengo"
+            enabledByDefault="true"
+            level="WARNING"/>
+
+        <localInspection
+            language="Tengo"
+            implementationClass="com.github.blackcat.tengo.inspections.TengoUnusedImportInspection"
+            displayName="Unused Tengo import"
+            groupName="Tengo"
+            enabledByDefault="true"
+            level="WARNING"/>
+
+        <applicationService
+            serviceImplementation="com.github.blackcat.tengo.run.TengoSettings"/>
+
+        <projectService
+            serviceImplementation="com.github.blackcat.tengo.TengoBuiltinDeclarations"/>
+
+        <applicationConfigurable
+            parentId="tools"
+            id="com.github.blackcat.tengo.settings"
+            displayName="Tengo"
+            instance="com.github.blackcat.tengo.run.TengoSettingsConfigurable"/>
+
+        <configurationType
+            implementation="com.github.blackcat.tengo.run.TengoConfigurationType"/>
+
+        <runLineMarkerContributor
+            language="Tengo"
+            implementationClass="com.github.blackcat.tengo.run.TengoRunLineMarkerProvider"/>
+    </extensions>
+</idea-plugin>

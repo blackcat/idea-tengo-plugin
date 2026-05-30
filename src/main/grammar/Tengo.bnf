@@ -1,0 +1,269 @@
+{
+  parserClass="com.github.blackcat.tengo.parser.TengoParser"
+  parserUtilClass="com.intellij.lang.parser.GeneratedParserUtilBase"
+
+  implements="com.intellij.psi.PsiElement"
+  extends="com.github.blackcat.tengo.psi.impl.TengoPsiElementBase"
+
+  psiClassPrefix="Tengo"
+  psiImplClassSuffix="Impl"
+  psiPackage="com.github.blackcat.tengo.psi"
+  psiImplPackage="com.github.blackcat.tengo.psi.impl"
+
+  elementTypeHolderClass="com.github.blackcat.tengo.psi.TengoTypes"
+  elementTypeClass="com.github.blackcat.tengo.psi.TengoElementType"
+  tokenTypeClass="com.github.blackcat.tengo.psi.TengoTokenType"
+
+  tokens = [
+    // Keywords
+    IF='if'
+    ELSE='else'
+    FOR='for'
+    IN='in'
+    RETURN='return'
+    BREAK='break'
+    CONTINUE='continue'
+    FUNC='func'
+    IMPORT='import'
+    EXPORT='export'
+    TRUE='true'
+    FALSE='false'
+    UNDEFINED='undefined'
+
+    // Compound assignment / definition operators
+    DEFINE=':='
+    ASSIGN='='
+    PLUS_ASSIGN='+='
+    MINUS_ASSIGN='-='
+    MUL_ASSIGN='*='
+    DIV_ASSIGN='/='
+    MOD_ASSIGN='%='
+    BIT_AND_ASSIGN='&='
+    BIT_OR_ASSIGN='|='
+    BIT_XOR_ASSIGN='^='
+    BIT_AND_NOT_ASSIGN='&^='
+    SHL_ASSIGN='<<='
+    SHR_ASSIGN='>>='
+
+    // Increment / decrement
+    INC='++'
+    DEC='--'
+
+    // Logical
+    LAND='&&'
+    LOR='||'
+    NOT='!'
+
+    // Comparison
+    EQ='=='
+    NEQ='!='
+    LE='<='
+    GE='>='
+    LT='<'
+    GT='>'
+
+    // Bitwise / shifts
+    SHL='<<'
+    SHR='>>'
+    BIT_AND_NOT='&^'
+    BIT_AND='&'
+    BIT_OR='|'
+    BIT_XOR='^'
+
+    // Arithmetic
+    PLUS='+'
+    MINUS='-'
+    MUL='*'
+    DIV='/'
+    MOD='%'
+
+    // Punctuation
+    LPAREN='('
+    RPAREN=')'
+    LBRACE='{'
+    RBRACE='}'
+    LBRACK='['
+    RBRACK=']'
+    COMMA=','
+    SEMICOLON=';'
+    COLON=':'
+    DOT='.'
+    ELLIPSIS='...'
+    QUESTION='?'
+
+    // Literals & identifiers (produced by the JFlex lexer)
+    IDENTIFIER='regexp:[A-Za-z_][A-Za-z0-9_]*'
+    INTEGER_LITERAL='regexp:0|[1-9][0-9]*'
+    FLOAT_LITERAL='regexp:[0-9]+\.[0-9]*'
+    HEX_LITERAL='regexp:0[xX][0-9A-Fa-f]+'
+    OCT_LITERAL='regexp:0[oO][0-7]+'
+    BIN_LITERAL='regexp:0[bB][01]+'
+    STRING_LITERAL='regexp:"([^"\\\\]|\\\\.)*"'
+    RAW_STRING_LITERAL='regexp:`[^`]*`'
+    CHAR_LITERAL="regexp:'([^'\\\\]|\\\\.)+'"
+
+    LINE_COMMENT='regexp://.*'
+    BLOCK_COMMENT='regexp:/\*([^*]|\*+[^*/])*\*+/'
+
+    WHITE_SPACE='regexp:\s+'
+  ]
+
+  extends("expr|.*_expr|literal|.*_literal")=expr
+  extends("func_literal|array_literal|map_literal|paren_expr|identifier_expr|import_expr|literal")=primary_expr
+}
+
+// ---------------------------------------------------------------------------
+// File
+// ---------------------------------------------------------------------------
+
+tengoFile ::= statement_list
+
+private statement_list ::= statement_with_terminator*
+
+// A statement optionally followed by a semicolon. We don't enforce semicolons
+// (Tengo allows newline-as-terminator) — the lexer's newline handling lets us
+// match either form.
+private statement_with_terminator ::= statement SEMICOLON? { pin=1 recoverWhile=statement_recovery }
+private statement_recovery        ::= !(statement_first | SEMICOLON | RBRACE)
+private statement_first           ::= IF | FOR | RETURN | BREAK | CONTINUE | LBRACE
+                                     | IMPORT | EXPORT | FUNC | IDENTIFIER
+                                     | INTEGER_LITERAL | FLOAT_LITERAL | HEX_LITERAL
+                                     | OCT_LITERAL | BIN_LITERAL | STRING_LITERAL
+                                     | RAW_STRING_LITERAL | CHAR_LITERAL
+                                     | TRUE | FALSE | UNDEFINED
+                                     | LPAREN | LBRACK | MINUS | PLUS | NOT | BIT_XOR
+
+// ---------------------------------------------------------------------------
+// Statements
+// ---------------------------------------------------------------------------
+
+statement ::= if_stmt
+            | for_stmt
+            | return_stmt
+            | break_stmt
+            | continue_stmt
+            | export_stmt
+            | block_stmt
+            | simple_stmt
+
+block_stmt ::= block
+
+block ::= LBRACE statement_list RBRACE { pin=1 }
+
+if_stmt    ::= IF [simple_stmt SEMICOLON] expr block [ELSE (if_stmt | block)] { pin=1 }
+for_stmt   ::= FOR for_header block { pin=1 }
+private for_header ::= for_in_clause | for_clause | expr | /* empty */
+for_clause     ::= simple_stmt? SEMICOLON expr? SEMICOLON simple_stmt?
+for_in_clause  ::= for_in_var (COMMA for_in_var)? IN expr { pin="IN" }
+for_in_var ::= IDENTIFIER {
+  mixin="com.github.blackcat.tengo.psi.impl.TengoForInVarMixin"
+  implements="com.intellij.psi.PsiNameIdentifierOwner"
+}
+
+return_stmt   ::= RETURN expr? { pin=1 }
+break_stmt    ::= BREAK { pin=1 }
+continue_stmt ::= CONTINUE { pin=1 }
+
+export_stmt   ::= EXPORT expr { pin=1 }
+
+simple_stmt ::= assign_stmt | inc_dec_stmt | expr_stmt
+private assign_op ::= DEFINE | ASSIGN | PLUS_ASSIGN | MINUS_ASSIGN
+                    | MUL_ASSIGN | DIV_ASSIGN | MOD_ASSIGN
+                    | BIT_AND_ASSIGN | BIT_OR_ASSIGN | BIT_XOR_ASSIGN
+                    | BIT_AND_NOT_ASSIGN | SHL_ASSIGN | SHR_ASSIGN
+
+assign_stmt   ::= lhs_list assign_op rhs_list { pin=2 }
+lhs_list      ::= expr (COMMA expr)*
+rhs_list      ::= expr (COMMA expr)*
+
+inc_dec_stmt  ::= expr (INC | DEC) { pin=2 }
+
+expr_stmt     ::= expr
+
+// ---------------------------------------------------------------------------
+// Expressions (precedence climbing via Grammar-Kit `expr`)
+// ---------------------------------------------------------------------------
+
+expr ::= ternary_expr
+       | logical_or_expr
+       | logical_and_expr
+       | bit_or_expr
+       | bit_xor_expr
+       | bit_and_expr
+       | equality_expr
+       | comparison_expr
+       | shift_expr
+       | additive_expr
+       | multiplicative_expr
+       | unary_expr
+       | postfix_expr
+       | primary_expr
+
+ternary_expr        ::= expr QUESTION expr COLON expr { rightAssociative=true }
+logical_or_expr     ::= expr LOR expr
+logical_and_expr    ::= expr LAND expr
+bit_or_expr         ::= expr BIT_OR expr
+bit_xor_expr        ::= expr BIT_XOR expr
+bit_and_expr        ::= expr (BIT_AND | BIT_AND_NOT) expr
+equality_expr       ::= expr (EQ | NEQ) expr
+comparison_expr     ::= expr (LT | LE | GT | GE) expr
+shift_expr          ::= expr (SHL | SHR) expr
+additive_expr       ::= expr (PLUS | MINUS) expr
+multiplicative_expr ::= expr (MUL | DIV | MOD) expr
+unary_expr          ::= (PLUS | MINUS | NOT | BIT_XOR) expr
+postfix_expr        ::= expr (call_suffix | index_suffix | selector_suffix)
+
+call_suffix     ::= LPAREN [arg_list] RPAREN { pin=1 }
+arg_list        ::= arg (COMMA arg)* COMMA?
+arg             ::= expr ELLIPSIS?
+
+index_suffix    ::= LBRACK index_arg RBRACK { pin=1 }
+private index_arg ::= slice_part_with_colon | expr
+private slice_part_with_colon ::= expr? COLON expr?
+
+selector_suffix ::= DOT identifier_ref { pin=1 }
+
+primary_expr ::= func_literal
+              | import_expr
+              | array_literal
+              | map_literal
+              | paren_expr
+              | literal
+              | identifier_expr
+
+paren_expr      ::= LPAREN expr RPAREN { pin=1 }
+identifier_expr ::= IDENTIFIER {
+  mixin="com.github.blackcat.tengo.psi.impl.TengoIdentifierExprMixin"
+  implements=["com.github.blackcat.tengo.psi.TengoPrimaryExpr" "com.intellij.psi.PsiNameIdentifierOwner"]
+}
+identifier_ref  ::= IDENTIFIER
+
+import_expr     ::= IMPORT LPAREN import_path RPAREN { pin=1 }
+import_path     ::= STRING_LITERAL | RAW_STRING_LITERAL
+
+func_literal    ::= FUNC LPAREN [param_list] RPAREN block { pin=1 }
+param_list      ::= param (COMMA param)*
+param           ::= ELLIPSIS? IDENTIFIER {
+  mixin="com.github.blackcat.tengo.psi.impl.TengoParamMixin"
+  implements="com.intellij.psi.PsiNameIdentifierOwner"
+}
+
+array_literal   ::= LBRACK [array_elements] RBRACK { pin=1 }
+private array_elements ::= expr (COMMA expr)* COMMA?
+
+map_literal     ::= LBRACE [map_entries] RBRACE { pin=1 }
+private map_entries    ::= map_entry (COMMA map_entry)* COMMA?
+map_entry       ::= map_key COLON expr { pin=2 }
+map_key         ::= IDENTIFIER | STRING_LITERAL | RAW_STRING_LITERAL
+
+literal ::= INTEGER_LITERAL
+          | FLOAT_LITERAL
+          | HEX_LITERAL
+          | OCT_LITERAL
+          | BIN_LITERAL
+          | STRING_LITERAL
+          | RAW_STRING_LITERAL
+          | CHAR_LITERAL
+          | TRUE
+          | FALSE
+          | UNDEFINED
