@@ -102,6 +102,38 @@
             enabledByDefault="true"
             level="WARNING"/>
 
+        <localInspection
+            language="Tengo"
+            implementationClass="com.github.blackcat.tengo.inspections.TengoUnusedVariableInspection"
+            displayName="Unused Tengo variable"
+            groupName="Tengo"
+            enabledByDefault="true"
+            level="WARNING"/>
+
+        <localInspection
+            language="Tengo"
+            implementationClass="com.github.blackcat.tengo.inspections.TengoUnusedParameterInspection"
+            displayName="Unused Tengo parameter or loop variable"
+            groupName="Tengo"
+            enabledByDefault="true"
+            level="WARNING"/>
+
+        <localInspection
+            language="Tengo"
+            implementationClass="com.github.blackcat.tengo.inspections.TengoShadowedNameInspection"
+            displayName="Shadowed Tengo declaration"
+            groupName="Tengo"
+            enabledByDefault="true"
+            level="WEAK WARNING"/>
+
+        <localInspection
+            language="Tengo"
+            implementationClass="com.github.blackcat.tengo.inspections.TengoUnreachableCodeInspection"
+            displayName="Unreachable Tengo code"
+            groupName="Tengo"
+            enabledByDefault="true"
+            level="WARNING"/>
+
         <applicationService
             serviceImplementation="com.github.blackcat.tengo.run.TengoSettings"/>
 
